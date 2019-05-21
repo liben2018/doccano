@@ -185,6 +185,8 @@ USE_L10N = True
 
 USE_TZ = True
 
+TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+TEST_OUTPUT_DIR = path.join(BASE_DIR, 'junitxml')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -195,12 +197,18 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/projects/'
 LOGOUT_REDIRECT_URL = '/'
 
+django_heroku.settings(locals(), test_runner=False)
+
 # Change 'default' database configuration with $DATABASE_URL.
 DATABASES['default'].update(dj_database_url.config(
     env='DATABASE_URL',
     conn_max_age=env.int('DATABASE_CONN_MAX_AGE', 500),
     ssl_require='sslmode' not in furl(env('DATABASE_URL', '')).args,
 ))
+
+# work-around for dj-database-url: explicitly disable ssl for sqlite
+if DATABASES['default'].get('ENGINE') == 'django.db.backends.sqlite3':
+    DATABASES['default'].get('OPTIONS', {}).pop('sslmode', None)
 
 # Honor the 'X-Forwarded-Proto' header for request.is_secure()
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -218,5 +226,3 @@ AZURE_APPINSIGHTS_IKEY = env('AZURE_APPINSIGHTS_IKEY', None)
 APPLICATION_INSIGHTS = {
     'ikey': AZURE_APPINSIGHTS_IKEY if AZURE_APPINSIGHTS_IKEY else None,
 }
-
-django_heroku.settings(locals(), test_runner=False)
